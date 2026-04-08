@@ -134,6 +134,9 @@ function setupTabs() {
             btn.classList.add('active');
             document.getElementById(`tab-${tab}`).classList.add('active');
 
+            // 背景切り替え用にbodyに属性を付与
+            document.body.setAttribute('data-active-tab', tab);
+
             if (tab === 'manage') title.textContent = '連盟員管理 & 役職設定';
             if (tab === 'daily') { title.textContent = '毎日用：ポイント入力'; renderDailyGrid(); }
             if (tab === 'daily-ranking') { title.textContent = 'ランキング(毎日)：週次集計'; renderDailyRankingSummary(); }
@@ -141,6 +144,9 @@ function setupTabs() {
             if (tab === 'simulator') { title.textContent = '昇格シミュレーター'; renderSimulator(); }
         });
     });
+
+    // 初期タブの設定を反映
+    document.body.setAttribute('data-active-tab', 'manage');
 }
 
 function checkAuth() {
