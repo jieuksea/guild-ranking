@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>連盟管理システム - Guild Management</title>
+    <meta name="description" content="連盟の貢献度やランキングを管理・共有するためのツールです。">
+    <meta property="og:title" content="連盟管理システム">
+    <meta property="og:description" content="連盟員の貢献度をスマートに管理。">
+    <meta property="og:type" content="website">
+
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-glow"></div>
+    
+    <main class="container">
+        <nav class="app-nav">
+            <button class="nav-btn active" data-tab="manage">連盟員管理</button>
+            <button class="nav-btn" data-tab="daily">日付別入力</button>
+            <button class="nav-btn" data-tab="daily-ranking">ランキング(毎日)</button>
+            <button class="nav-btn" data-tab="weekly">毎週用</button>
+            <button class="nav-btn" data-tab="simulator">昇格シミュレーター</button>
+        </nav>
+
+        <header class="app-header">
+            <h1>連盟管理システム</h1>
+            <p class="subtitle" id="current-view-title">連盟員管理 & 役職設定</p>
+        </header>
+
+        <!-- 管理タブ -->
+        <div id="tab-manage" class="tab-content active">
+            <section class="add-member-section">
+                <div class="input-group">
+                    <input type="text" id="newMemberName" placeholder="新しい連盟員名..." autocomplete="off">
+                    <button id="addMemberBtn" class="btn btn-add">追加</button>
+                </div>
+            </section>
+
+            <section class="controls">
+                <div class="search-bar">
+                    <input type="text" id="memberSearch" placeholder="連盟員を検索...">
+                </div>
+                <div class="stats-summary">
+                    連盟員数: <span id="memberCount">0</span>
+                </div>
+                <div class="data-actions">
+                    <button id="exportDataBtn" class="btn btn-secondary-small">📦 出力 (保存用)</button>
+                    <button id="importDataBtn" class="btn btn-secondary-small">📥 読込 (復元用)</button>
+                    <input type="file" id="importFileInput" style="display: none;" accept=".json">
+                </div>
+            </section>
+
+            <div class="table-card">
+                <div class="table-responsive">
+                    <table id="memberTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>連盟員名</th>
+                                <th>役職</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="memberListBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 毎日用タブ -->
+        <div id="tab-daily" class="tab-content">
+            <section class="daily-date-selection">
+                <div class="calendar-card">
+                    <label for="specificDatePicker">📅 入力する日付を選択:</label>
+                    <input type="date" id="specificDatePicker" class="date-input">
+                </div>
+            <section class="daily-bulk-input">
+                <div class="grid-header">
+                    <h3>✍️ 一括・個別ポイント入力</h3>
+                    <p class="guide-text">「名前,ポイント」の形式で貼り付け、または個別に数値を入力してください。</p>
+                </div>
+                
+                <div class="bulk-area">
+                    <textarea id="bulkInputArea" placeholder="天くんのパパ, 1000&#10;Ｔ－Ａ, 2000&#10;...のように貼り付け可能"></textarea>
+                    <button id="applyBulkBtn" class="btn btn-primary">一括反映する</button>
+                </div>
+
+                <div id="dailyInputGrid" class="daily-input-grid">
+                    <!-- JSで連盟員別の個別ボックスを生成 -->
+                </div>
+            </section>
+        </div>
+
+        <!-- ランキング（毎日）タブ -->
+        <div id="tab-daily-ranking" class="tab-content">
+            <section class="daily-ranking-selection date-selector-section">
+                <div class="calendar-card">
+                    <label for="rankingWeekPicker">📅 週計の期間を選択 (月曜開始):</label>
+                    <input type="date" id="rankingWeekPicker" class="date-input">
+                    <span class="selected-week-range" id="rankingWeekRangeDisplay">----/--/-- - ----/--/--</span>
+                </div>
+            </section>
+
+            <div class="table-card matrix-card">
+                <div class="table-responsive">
+                    <table id="dailySummaryTable">
+                        <thead>
+                            <tr class="main-headers">
+                                <th rowspan="2" class="rank-col">#</th>
+                                <th rowspan="2" class="sticky-col">名前</th>
+                                <th rowspan="2">役職</th>
+                                <th>月曜</th>
+                                <th>火曜</th>
+                                <th>水曜</th>
+                                <th>木曜</th>
+                                <th>金曜</th>
+                                <th>土曜</th>
+                                <th rowspan="2">合計</th>
+                            </tr>
+                            <tr class="sub-headers">
+                                <th>レーダー</th>
+                                <th>基地</th>
+                                <th>科学</th>
+                                <th>英雄</th>
+                                <th>戦争</th>
+                                <th>敵軍</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dailySummaryBody">
+                            <!-- JSで生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 毎週用タブ -->
+        <div id="tab-weekly" class="tab-content">
+            <section class="weekly-date-selection date-selector-section">
+                <div class="calendar-card">
+                    <label for="weeklyWeekPicker">📅 週計の期間を選択 (月曜開始):</label>
+                    <input type="date" id="weeklyWeekPicker" class="date-input">
+                    <span class="selected-week-range" id="weeklyRangeDisplay">----/--/-- - ----/--/--</span>
+                </div>
+            </section>
+
+            <section class="weekly-bulk-input">
+                <div class="grid-header">
+                    <h3>🏆 週計ポイントの一括・個別入力</h3>
+                    <p class="guide-text">週の最終結果を貼り付けるか、個別に数値を入力してください。</p>
+                </div>
+                
+                <div class="bulk-area">
+                    <textarea id="weeklyBulkArea" placeholder="天くんのパパ, 15000&#10;Ｔ－Ａ, 20000&#10;...のように貼り付け可能"></textarea>
+                    <button id="applyWeeklyBulkBtn" class="btn btn-primary">一括反映する</button>
+                </div>
+
+                <div id="weeklyInputGrid" class="daily-input-grid">
+                    <!-- JSで個別ボックスを生成 -->
+                </div>
+            </section>
+        </div>
+
+        <!-- 昇格シミュレータータブ -->
+        <div id="tab-simulator" class="tab-content">
+            <section class="simulator-config daily-bulk-input">
+                <div class="grid-header">
+                    <h3>⚙️ 昇格基準ポイント設定</h3>
+                    <p class="guide-text">各ランクへの昇格に必要な週間ポイントを設定してください。</p>
+                </div>
+                <div class="threshold-area" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                    <div class="threshold-item">
+                        <label style="display: block; margin-bottom: 8px;">R1 → R2</label>
+                        <input type="number" id="thresholdR2" class="form-input" placeholder="例: 5000">
+                    </div>
+                    <div class="threshold-item">
+                        <label style="display: block; margin-bottom: 8px;">R2 → R3</label>
+                        <input type="number" id="thresholdR3" class="form-input" placeholder="例: 10000">
+                    </div>
+                    <div class="threshold-item">
+                        <label style="display: block; margin-bottom: 8px;">R3 → R4</label>
+                        <input type="number" id="thresholdR4" class="form-input" placeholder="例: 20000">
+                    </div>
+                    <div class="threshold-item">
+                        <label style="display: block; margin-bottom: 8px;">R4 → 幹部級</label>
+                        <input type="number" id="thresholdEx" class="form-input" placeholder="例: 40000">
+                    </div>
+                </div>
+                <button id="updateSimBtn" class="btn btn-primary" style="margin-top: 2rem; width: auto; padding: 12px 30px;">シミュレーション実行</button>
+            </section>
+
+            <div class="table-card sim-card">
+                <div class="table-responsive">
+                    <table id="simTable">
+                        <thead>
+                            <tr>
+                                <th>名前</th>
+                                <th class="numeric-col">週間計</th>
+                                <th>現役職</th>
+                                <th>判定ランク</th>
+                                <th>ステータス</th>
+                            </tr>
+                        </thead>
+                        <tbody id="simBody">
+                            <!-- JSで生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <footer class="app-footer">
+            <button id="saveData" class="btn btn-primary">保存する</button>
+        </footer>
+    </main>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
+    <script>
+        // --- ここにFirebaseのプロジェクト設定を貼り付けてください ---
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        // --------------------------------------------------------
+        
+        // 設定が書き換えられているかチェック
+        if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
+            firebase.initializeApp(firebaseConfig);
+            window.db = firebase.firestore();
+        }
+    </script>
+
+    <script src="main.js"></script>
+</body>
+</html>
