@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,11 +11,14 @@
     <meta property="og:type" content="website">
 
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap"
+        rel="stylesheet">
 </head>
+
 <body>
     <div class="background-glow"></div>
-    
+
     <main class="container">
         <nav class="app-nav">
             <button class="nav-btn active" data-tab="manage">連盟員管理</button>
@@ -76,21 +80,22 @@
                     <label for="specificDatePicker">📅 入力する日付を選択:</label>
                     <input type="date" id="specificDatePicker" class="date-input">
                 </div>
-            <section class="daily-bulk-input">
-                <div class="grid-header">
-                    <h3>✍️ 一括・個別ポイント入力</h3>
-                    <p class="guide-text">「名前,ポイント」の形式で貼り付け、または個別に数値を入力してください。</p>
-                </div>
-                
-                <div class="bulk-area">
-                    <textarea id="bulkInputArea" placeholder="天くんのパパ, 1000&#10;Ｔ－Ａ, 2000&#10;...のように貼り付け可能"></textarea>
-                    <button id="applyBulkBtn" class="btn btn-primary">一括反映する</button>
-                </div>
+                <section class="daily-bulk-input">
+                    <div class="grid-header">
+                        <h3>✍️ 一括・個別ポイント入力</h3>
+                        <p class="guide-text">「名前,ポイント」の形式で貼り付け、または個別に数値を入力してください。</p>
+                    </div>
 
-                <div id="dailyInputGrid" class="daily-input-grid">
-                    <!-- JSで連盟員別の個別ボックスを生成 -->
-                </div>
-            </section>
+                    <div class="bulk-area">
+                        <textarea id="bulkInputArea"
+                            placeholder="天くんのパパ, 1000&#10;Ｔ－Ａ, 2000&#10;...のように貼り付け可能"></textarea>
+                        <button id="applyBulkBtn" class="btn btn-primary">一括反映する</button>
+                    </div>
+
+                    <div id="dailyInputGrid" class="daily-input-grid">
+                        <!-- JSで連盟員別の個別ボックスを生成 -->
+                    </div>
+                </section>
         </div>
 
         <!-- ランキング（毎日）タブ -->
@@ -151,9 +156,10 @@
                     <h3>🏆 週計ポイントの一括・個別入力</h3>
                     <p class="guide-text">週の最終結果を貼り付けるか、個別に数値を入力してください。</p>
                 </div>
-                
+
                 <div class="bulk-area">
-                    <textarea id="weeklyBulkArea" placeholder="天くんのパパ, 15000&#10;Ｔ－Ａ, 20000&#10;...のように貼り付け可能"></textarea>
+                    <textarea id="weeklyBulkArea"
+                        placeholder="天くんのパパ, 15000&#10;Ｔ－Ａ, 20000&#10;...のように貼り付け可能"></textarea>
                     <button id="applyWeeklyBulkBtn" class="btn btn-primary">一括反映する</button>
                 </div>
 
@@ -170,7 +176,8 @@
                     <h3>⚙️ 昇格基準ポイント設定</h3>
                     <p class="guide-text">各ランクへの昇格に必要な週間ポイントを設定してください。</p>
                 </div>
-                <div class="threshold-area" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                <div class="threshold-area"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
                     <div class="threshold-item">
                         <label style="display: block; margin-bottom: 8px;">R1 → R2</label>
                         <input type="number" id="thresholdR2" class="form-input" placeholder="例: 5000">
@@ -188,7 +195,8 @@
                         <input type="number" id="thresholdEx" class="form-input" placeholder="例: 40000">
                     </div>
                 </div>
-                <button id="updateSimBtn" class="btn btn-primary" style="margin-top: 2rem; width: auto; padding: 12px 30px;">シミュレーション実行</button>
+                <button id="updateSimBtn" class="btn btn-primary"
+                    style="margin-top: 2rem; width: auto; padding: 12px 30px;">シミュレーション実行</button>
             </section>
 
             <div class="table-card sim-card">
@@ -219,19 +227,21 @@
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    
+
     <script>
         // --- ここにFirebaseのプロジェクト設定を貼り付けてください ---
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
+
+            apiKey: "AIzaSyAKEVLZDSOvvnHW2aBIFZd-RXjzMpW7CPo",
+            authDomain: "jieuksea.firebaseapp.com",
+            projectId: "jieuksea",
+            storageBucket: "jieuksea.firebasestorage.app",
+            messagingSenderId: "769964414466",
+            appId: "1:769964414466:web:a0e1592d909d908382791b",
+            measurementId: "G-L5J7NXE274"
         };
         // --------------------------------------------------------
-        
+
         // 設定が書き換えられているかチェック
         if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
             firebase.initializeApp(firebaseConfig);
@@ -241,4 +251,5 @@
 
     <script src="main.js"></script>
 </body>
+
 </html>
