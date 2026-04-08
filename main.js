@@ -148,6 +148,7 @@ function checkAuth() {
 }
 
 function exportData() {
+    if (!checkAuth()) return;
     const data = {
         members,
         dailyData,
