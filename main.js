@@ -38,6 +38,7 @@ async function init() {
     // 2. Firebaseが設定されていればクラウドから最新を取得
     if (window.db) {
         console.log("Firebase同期を開始します...");
+        showSyncBadge(true); // まず接続中であることを表示
         try {
             const doc = await db.collection('guild').doc('current').get();
             if (doc.exists) {
@@ -47,7 +48,6 @@ async function init() {
                 if (data.weeklyData) weeklyData = data.weeklyData;
                 if (data.thresholds) thresholds = data.thresholds;
                 console.log("Firebaseからのデータ取得に成功しました。");
-                showSyncBadge(true);
             }
         } catch (e) {
             console.error("Firebase同期失敗:", e);
