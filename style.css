@@ -34,7 +34,7 @@ body {
     
     /* 背景切り替えのベース設定 */
     transition: background 0.8s ease-in-out;
-    background-size: cover;
+    background-size: auto 100%;
     background-position: center;
     background-attachment: fixed;
     background-repeat: no-repeat;
@@ -143,6 +143,18 @@ body[data-active-tab="daily-ranking"] {
     background-image: 
         linear-gradient(rgba(15, 12, 41, 0.7), rgba(15, 12, 41, 0.85)), 
         url('ranking-bg.png');
+}
+
+body[data-active-tab="weekly"] {
+    background-image: 
+        linear-gradient(rgba(15, 12, 41, 0.7), rgba(15, 12, 41, 0.85)), 
+        url('weekly-bg.png');
+}
+
+body[data-active-tab="simulator"] {
+    background-image: 
+        linear-gradient(rgba(15, 12, 41, 0.7), rgba(15, 12, 41, 0.85)), 
+        url('sim-bg.png');
 }
 
 /* 他のタブの背景もここに追加可能 */
