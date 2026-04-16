@@ -151,6 +151,12 @@ body[data-active-tab="weekly"] {
         url('weekly-bg.png');
 }
 
+body[data-active-tab="donation"] {
+    background-image: 
+        linear-gradient(rgba(15, 12, 41, 0.7), rgba(15, 12, 41, 0.85)), 
+        url('donation-bg.png');
+}
+
 body[data-active-tab="simulator"] {
     background-image: 
         linear-gradient(rgba(15, 12, 41, 0.7), rgba(15, 12, 41, 0.85)), 
@@ -746,6 +752,38 @@ tbody tr:nth-child(n) {
     font-weight: 700;
     color: var(--secondary);
     border-left: 1px solid var(--border);
+}
+
+/* ソート関連 */
+.sortable {
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+    transition: var(--transition);
+}
+
+.sortable:hover {
+    background: rgba(108, 92, 231, 0.3) !important;
+    color: white !important;
+}
+
+.sortable::after {
+    content: '↕';
+    font-size: 0.8em;
+    margin-left: 5px;
+    opacity: 0.3;
+}
+
+.sortable.sort-asc::after {
+    content: '▲';
+    opacity: 1;
+    color: var(--secondary);
+}
+
+.sortable.sort-desc::after {
+    content: '▼';
+    opacity: 1;
+    color: var(--secondary);
 }
 
 .rank-badge {

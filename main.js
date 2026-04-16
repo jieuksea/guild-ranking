@@ -13,9 +13,18 @@ const roles = [...rolePriority].reverse();
 let members = [];
 let dailyData = {};
 let weeklyData = {};
+let donationData = {};
 let currentRankingWeekStart = '';
 let currentWeeklyWeekStart = '';
+let currentDonationWeekStart = '';
 let thresholds = { R2: 5000, R3: 10000, R4: 20000, Ex: 40000 };
+
+// ソート状態
+let currentSortCol = 'total';
+let currentSortDir = 'desc';
+
+let simSortCol = 'total';
+let simSortDir = 'desc';
 
 async function init() {
     // 1. まずローカルのデータをロード
@@ -32,6 +41,9 @@ async function init() {
     const savedWeekly = localStorage.getItem('guildWeeklyContribution');
     if (savedWeekly) weeklyData = JSON.parse(savedWeekly);
 
+    const savedDonation = localStorage.getItem('guildDonationContribution');
+    if (savedDonation) donationData = JSON.parse(savedDonation);
+
     const savedThresholds = localStorage.getItem('guildPromotionThresholds');
     if (savedThresholds) thresholds = JSON.parse(savedThresholds);
 
@@ -46,6 +58,7 @@ async function init() {
                 if (data.members) members = data.members;
                 if (data.dailyData) dailyData = data.dailyData;
                 if (data.weeklyData) weeklyData = data.weeklyData;
+                if (data.donationData) donationData = data.donationData;
                 if (data.thresholds) thresholds = data.thresholds;
                 console.log("Firebaseからのデータ取得に成功しました。");
             }
@@ -68,9 +81,11 @@ async function init() {
     const monStr = formatDate(monday);
     currentRankingWeekStart = monStr;
     currentWeeklyWeekStart = monStr;
+    currentDonationWeekStart = monStr;
 
     if (document.getElementById('rankingWeekPicker')) document.getElementById('rankingWeekPicker').value = monStr;
     if (document.getElementById('weeklyWeekPicker')) document.getElementById('weeklyWeekPicker').value = monStr;
+    if (document.getElementById('donationWeekPicker')) document.getElementById('donationWeekPicker').value = monStr;
 
     setupTabs();
     initCalendar();
@@ -78,6 +93,7 @@ async function init() {
     renderTable();
     updateRankingWeekDisplay();
     updateWeeklyInputWeekDisplay();
+    updateDonationInputWeekDisplay();
     renderDailyGrid();
     updateStats();
 }
@@ -109,6 +125,9 @@ function setupEntryForms() {
     const weeklyBtn = document.getElementById('applyWeeklyBulkBtn');
     if (weeklyBtn) weeklyBtn.addEventListener('click', handleWeeklyBulkInput);
 
+    const donationBtn = document.getElementById('applyDonationBulkBtn');
+    if (donationBtn) donationBtn.addEventListener('click', handleDonationBulkInput);
+
     const simBtn = document.getElementById('updateSimBtn');
     if (simBtn) simBtn.addEventListener('click', () => {
         if (!checkAuth()) return;
@@ -139,14 +158,16 @@ function setupTabs() {
 
             if (tab === 'manage') title.textContent = '連盟員管理 & 役職設定';
             if (tab === 'daily') { title.textContent = '毎日用：ポイント入力'; renderDailyGrid(); }
-            if (tab === 'daily-ranking') { title.textContent = 'ランキング(毎日)：週次集計'; renderDailyRankingSummary(); }
-            if (tab === 'weekly') { title.textContent = '毎週用：週計ポイント入力'; renderWeeklyGrid(); }
+            if (tab === 'daily-ranking') { title.textContent = '対決ランキング(毎日)：週次集計'; renderDailyRankingSummary(); }
+            if (tab === 'weekly') { title.textContent = '対決ポイント(最終)：週計ポイント入力'; renderWeeklyGrid(); }
+            if (tab === 'donation') { title.textContent = '寄付ポイント(最終)：週計ポイント入力'; renderDonationGrid(); }
             if (tab === 'simulator') { title.textContent = '昇格シミュレーター'; renderSimulator(); }
         });
     });
 
     // 初期タブの設定を反映
-    document.body.setAttribute('data-active-tab', 'manage');
+    const activeTab = document.querySelector('.nav-btn.active')?.getAttribute('data-tab') || 'manage';
+    document.body.setAttribute('data-active-tab', activeTab);
 }
 
 function checkAuth() {
@@ -159,6 +180,7 @@ function exportData() {
         members,
         dailyData,
         weeklyData,
+        donationData,
         thresholds,
         version: "1.0",
         exportedAt: new Date().toISOString()
@@ -186,6 +208,7 @@ function handleImport(e) {
             if (data.members) members = data.members;
             if (data.dailyData) dailyData = data.dailyData;
             if (data.weeklyData) weeklyData = data.weeklyData;
+            if (data.donationData) donationData = data.donationData;
             if (data.thresholds) thresholds = data.thresholds;
             
             save();
@@ -311,6 +334,56 @@ function updateWeeklyPoint(date, name, value) {
     weeklyData[date][name] = parseInt(value) || 0;
 }
 
+// --- 寄付用ロジック ---
+function handleDonationBulkInput() {
+    if (!checkAuth()) return;
+    const area = document.getElementById('donationBulkArea');
+    if (!area || !currentDonationWeekStart) return;
+    if (!donationData[currentDonationWeekStart]) donationData[currentDonationWeekStart] = {};
+
+    area.value.split('\n').forEach(line => {
+        const match = line.match(/^(.+?)[,\s：:　]+(\d+)$/);
+        if (match) {
+            const pastedName = match[1].trim();
+            const normPasted = normalizeName(pastedName);
+            const pts = parseInt(match[2]) * 1000; // 0を3つ追加 (1000倍)
+            
+            const member = members.find(m => normalizeName(m.name) === normPasted);
+            if (member) donationData[currentDonationWeekStart][member.name] = pts;
+        }
+    });
+
+    save();
+    renderDonationGrid();
+    area.value = '';
+    alert('寄付データを反映しました！');
+}
+
+function renderDonationGrid() {
+    const grid = document.getElementById('donationInputGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    if (!currentDonationWeekStart) return;
+
+    members.forEach(member => {
+        const pts = (donationData[currentDonationWeekStart] && donationData[currentDonationWeekStart][member.name]) || '';
+        const cell = document.createElement('div');
+        cell.className = 'input-cell';
+        cell.innerHTML = `<span class="input-cell-name">${member.name}</span>
+            <input type="number" class="input-cell-points" value="${pts}" placeholder="0" 
+                   onchange="updateDonationPoint('${currentDonationWeekStart}', '${member.name}', this.value)">`;
+        grid.appendChild(cell);
+    });
+}
+
+function updateDonationPoint(date, name, value) {
+    if (!donationData[date]) donationData[date] = {};
+    const pts = parseInt(value) || 0;
+    donationData[date][name] = pts * 1000; // 0を3つ追加 (1000倍)
+    // グリッドを再描画して反映後の数値(000付き)を表示させる
+    renderDonationGrid();
+}
+
 // --- ランキング表示 ---
 function renderDailyRankingSummary() {
     const tbody = document.getElementById('dailySummaryBody');
@@ -318,25 +391,85 @@ function renderDailyRankingSummary() {
     tbody.innerHTML = '';
     const weekDays = getWeekDays(currentRankingWeekStart);
 
-    const summary = members.map(m => {
+    // データ集計
+    let summary = members.map(m => {
         let total = 0;
         const pts = [];
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < 6; i++) { // 土曜まで
             const p = (dailyData[weekDays[i]] && dailyData[weekDays[i]][m.name]) || 0;
             pts.push(p);
             total += p;
         }
         return { name: m.name, role: m.role, pts, total };
-    }).sort((a, b) => b.total - a.total);
+    });
+
+    // ソート処理
+    summary.sort((a, b) => {
+        let valA, valB;
+        
+        if (currentSortCol === 'name') {
+            valA = a.name;
+            valB = b.name;
+            return currentSortDir === 'asc' ? valA.localeCompare(valB, 'ja') : valB.localeCompare(valA, 'ja');
+        } else if (currentSortCol === 'role') {
+            valA = rolePriority.indexOf(a.role);
+            valB = rolePriority.indexOf(b.role);
+        } else if (currentSortCol === 'total') {
+            valA = a.total;
+            valB = b.total;
+        } else if (currentSortCol === 'rank') {
+            // 元々のランク（合計値の降順）で比較
+            valA = a.total;
+            valB = b.total;
+            // ランクは合計値の逆方向で考える
+            return currentSortDir === 'asc' ? valA - valB : valB - valA;
+        } else {
+            // 曜日別 (0-5)
+            const dayIdx = parseInt(currentSortCol);
+            valA = a.pts[dayIdx];
+            valB = b.pts[dayIdx];
+        }
+
+        if (currentSortDir === 'asc') return valA - valB;
+        return valB - valA;
+    });
+
+    // ヘッダーのソートアイコン更新
+    updateSortIcons();
 
     summary.forEach((m, idx) => {
         const tr = document.createElement('tr');
-        if (idx < 3) tr.className = `rank-${idx + 1}`;
-        tr.innerHTML = `<td><span class="rank-badge">${idx + 1}</span></td>
+        
+        // 合計値ベースのランク表示を計算（ソート順に関わらず絶対的な順位を表示したい場合）
+        // ここでは単純に表示順に順位を振るか、元の実力順位を振るか
+        // ユーザーは「各曜日でソート」を求めているので、表示順に順位を振ると混乱する可能性がある
+        // しかし、通常はソート後の順序で#を振るのが一般的
+        
+        // 実力順（合計値）を別途計算してランクバッジに使う
+        const actualRank = members.map(x => {
+            let t = 0;
+            for(let i=0; i<6; i++) t += (dailyData[weekDays[i]] && dailyData[weekDays[i]][x.name]) || 0;
+            return {name: x.name, total: t};
+        }).sort((a,b) => b.total - a.total).findIndex(x => x.name === m.name) + 1;
+
+        if (actualRank <= 3) tr.className = `rank-${actualRank}`;
+        
+        tr.innerHTML = `<td><span class="rank-badge">${actualRank}</span></td>
             <td class="sticky-col member-name">${m.name}</td><td>${m.role}</td>
             ${m.pts.map(p => `<td>${p.toLocaleString()}</td>`).join('')}
             <td class="total-col">${m.total.toLocaleString()}</td>`;
         tbody.appendChild(tr);
+    });
+}
+
+function updateSortIcons() {
+    const headers = document.querySelectorAll('#dailySummaryTable th.sortable');
+    headers.forEach(th => {
+        const col = th.getAttribute('data-sort');
+        th.classList.remove('sort-asc', 'sort-desc');
+        if (col === currentSortCol) {
+            th.classList.add(currentSortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+        }
     });
 }
 
@@ -349,6 +482,12 @@ function updateRankingWeekDisplay() {
 function updateWeeklyInputWeekDisplay() {
     const days = getWeekDays(currentWeeklyWeekStart);
     const target = document.getElementById('weeklyRangeDisplay');
+    if (target) target.textContent = `${days[0].replace(/-/g, '/')} - ${days[6].replace(/-/g, '/')}`;
+}
+
+function updateDonationInputWeekDisplay() {
+    const days = getWeekDays(currentDonationWeekStart);
+    const target = document.getElementById('donationRangeDisplay');
     if (target) target.textContent = `${days[0].replace(/-/g, '/')} - ${days[6].replace(/-/g, '/')}`;
 }
 
@@ -417,6 +556,14 @@ function updateName(oldName, newName) {
         }
     });
 
+    // 4. 寄付用データの移行
+    Object.keys(donationData).forEach(week => {
+        if (donationData[week][oldName] !== undefined) {
+            donationData[week][newName] = donationData[week][oldName];
+            delete donationData[week][oldName];
+        }
+    });
+
     save();
     renderTable();
     updateStats();
@@ -449,6 +596,11 @@ function removeMember(name) {
             delete weeklyData[week][name];
         });
 
+        // 4. 寄付用データから削除
+        Object.keys(donationData).forEach(week => {
+            delete donationData[week][name];
+        });
+
         save();
         renderTable();
         updateStats();
@@ -461,31 +613,59 @@ function renderSimulator() {
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    // weeklyDataの中から直近（最新）の日付を取得
+    // weeklyData & donationData の中から直近（最新）の日付を取得
     const weekKeys = Object.keys(weeklyData).filter(k => Object.keys(weeklyData[k]).length > 0).sort();
     const latestWeekKey = weekKeys.length > 0 ? weekKeys[weekKeys.length - 1] : null;
 
+    const donWeekKeys = Object.keys(donationData).filter(k => Object.keys(donationData[k]).length > 0).sort();
+    const latestDonWeekKey = donWeekKeys.length > 0 ? donWeekKeys[donWeekKeys.length - 1] : null;
+
     const currentPoints = latestWeekKey ? weeklyData[latestWeekKey] : {};
+    const currentDonationPoints = latestDonWeekKey ? donationData[latestDonWeekKey] : {};
 
     // 表示用タイトルの更新
     const title = document.querySelector('#tab-simulator .grid-header p');
     if (title && latestWeekKey) {
         const d = latestWeekKey.replace(/-/g, '/');
-        title.textContent = `直近の毎週用データ (${d}開始の週) を参照中`;
+        title.textContent = `直近の週次データ (${d}開始の週) を参照中`;
     }
 
     const roleLevels = { "盟主": 4, "戦神": 4, "女神": 4, "理事": 4, "執事": 4, "R4": 3, "R3": 2, "R2": 1, "R1": 0 };
     const levelRoles = ["R1", "R2", "R3", "R4", "幹部級"];
 
-    // 役職の優先順位でソート
-    const sortedMembers = [...members].sort((a, b) => {
-        const pA = rolePriority.indexOf(a.role);
-        const pB = rolePriority.indexOf(b.role);
-        return (pA - pB) || a.name.localeCompare(b.name, 'ja');
+    // データの準備
+    let simData = members.map(m => {
+        const pts = currentPoints[m.name] || 0;
+        const donPts = currentDonationPoints[m.name] || 0;
+        const totalContribution = pts + donPts;
+        return { ...m, pts, donPts, totalContribution };
     });
 
-    sortedMembers.forEach(m => {
-        const pts = currentPoints[m.name] || 0;
+    // ソート処理
+    simData.sort((a, b) => {
+        let valA, valB;
+        if (simSortCol === 'pts') { valA = a.pts; valB = b.pts; }
+        else if (simSortCol === 'donPts') { valA = a.donPts; valB = b.donPts; }
+        else if (simSortCol === 'total') { valA = a.totalContribution; valB = b.totalContribution; }
+        else {
+            // デフォルトは役職順（役職優先度ベース）
+            const pA = rolePriority.indexOf(a.role);
+            const pB = rolePriority.indexOf(b.role);
+            return (pA - pB) || a.name.localeCompare(b.name, 'ja');
+        }
+
+        if (simSortDir === 'asc') return valA - valB;
+        return valB - valA;
+    });
+
+    // ヘッダーのソートアイコン更新
+    updateSimSortIcons();
+
+    simData.forEach(m => {
+        const pts = m.pts;
+        const donPts = m.donPts;
+        const totalContribution = m.totalContribution;
+
         let recLevel = 0;
         if (pts >= thresholds.Ex) recLevel = 4;
         else if (pts >= thresholds.R4) recLevel = 3;
@@ -513,6 +693,8 @@ function renderSimulator() {
         tr.innerHTML = `
             <td>${m.name}</td>
             <td class="numeric-col">${pts.toLocaleString()}</td>
+            <td class="numeric-col">${donPts.toLocaleString()}</td>
+            <td class="numeric-col" style="color: var(--primary); font-weight: 700;">${totalContribution.toLocaleString()}</td>
             <td>${m.role}</td>
             <td style="font-weight:700; color: var(--secondary);">${levelRoles[recLevel]}</td>
             <td><span class="sim-status ${statusClass}">${status}</span></td>
@@ -521,10 +703,22 @@ function renderSimulator() {
     });
 }
 
+function updateSimSortIcons() {
+    const headers = document.querySelectorAll('#simTable th.sortable');
+    headers.forEach(th => {
+        const col = th.getAttribute('data-sort');
+        th.classList.remove('sort-asc', 'sort-desc');
+        if (col === simSortCol) {
+            th.classList.add(simSortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+        }
+    });
+}
+
 function save() {
     localStorage.setItem('guildRankingData', JSON.stringify(members));
     localStorage.setItem('guildDailyContribution', JSON.stringify(dailyData));
     localStorage.setItem('guildWeeklyContribution', JSON.stringify(weeklyData));
+    localStorage.setItem('guildDonationContribution', JSON.stringify(donationData));
     localStorage.setItem('guildPromotionThresholds', JSON.stringify(thresholds));
 
     // Firebase同期
@@ -533,6 +727,7 @@ function save() {
             members,
             dailyData,
             weeklyData,
+            donationData,
             thresholds,
             lastUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => console.log("クラウドに保存しました。"))
@@ -558,6 +753,12 @@ if (wwp) wwp.addEventListener('change', e => {
     updateWeeklyInputWeekDisplay(); renderWeeklyGrid();
 });
 
+const dwp = document.getElementById('donationWeekPicker');
+if (dwp) dwp.addEventListener('change', e => {
+    currentDonationWeekStart = getMonStr(e.target.value);
+    updateDonationInputWeekDisplay(); renderDonationGrid();
+});
+
 document.getElementById('memberSearch').addEventListener('input', e => renderTable(e.target.value));
 document.getElementById('addMemberBtn').addEventListener('click', () => {
     const name = document.getElementById('newMemberName').value.trim();
@@ -578,6 +779,33 @@ document.getElementById('saveData').addEventListener('click', () => {
 document.getElementById('exportDataBtn').addEventListener('click', exportData);
 document.getElementById('importDataBtn').addEventListener('click', () => document.getElementById('importFileInput').click());
 document.getElementById('importFileInput').addEventListener('change', handleImport);
+
+// テーブルヘッダークリックでのソート
+document.querySelectorAll('#dailySummaryTable th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+        const col = th.getAttribute('data-sort');
+        if (currentSortCol === col) {
+            currentSortDir = currentSortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSortCol = col;
+            currentSortDir = 'desc'; // デフォルトは降順（数値が多い順）
+        }
+        renderDailyRankingSummary();
+    });
+});
+
+document.querySelectorAll('#simTable th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+        const col = th.getAttribute('data-sort');
+        if (simSortCol === col) {
+            simSortDir = simSortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            simSortCol = col;
+            simSortDir = 'desc';
+        }
+        renderSimulator();
+    });
+});
 
 function getMonStr(dateStr) {
     const d = new Date(dateStr);

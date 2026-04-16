@@ -23,8 +23,9 @@
         <nav class="app-nav">
             <button class="nav-btn active" data-tab="manage">連盟員管理</button>
             <button class="nav-btn" data-tab="daily">日付別入力</button>
-            <button class="nav-btn" data-tab="daily-ranking">ランキング(毎日)</button>
-            <button class="nav-btn" data-tab="weekly">毎週用</button>
+            <button class="nav-btn" data-tab="daily-ranking">対決ランキング(毎日)</button>
+            <button class="nav-btn" data-tab="weekly">対決ポイント(最終)</button>
+            <button class="nav-btn" data-tab="donation">寄付ポイント(最終)</button>
             <button class="nav-btn" data-tab="simulator">昇格シミュレーター</button>
         </nav>
 
@@ -98,7 +99,7 @@
                 </section>
         </div>
 
-        <!-- ランキング（毎日）タブ -->
+        <!-- 対決ランキング（毎日）タブ -->
         <div id="tab-daily-ranking" class="tab-content">
             <section class="daily-ranking-selection date-selector-section">
                 <div class="calendar-card">
@@ -113,16 +114,16 @@
                     <table id="dailySummaryTable">
                         <thead>
                             <tr class="main-headers">
-                                <th rowspan="2" class="rank-col">#</th>
-                                <th rowspan="2" class="sticky-col">名前</th>
-                                <th rowspan="2">役職</th>
-                                <th>月曜</th>
-                                <th>火曜</th>
-                                <th>水曜</th>
-                                <th>木曜</th>
-                                <th>金曜</th>
-                                <th>土曜</th>
-                                <th rowspan="2">合計</th>
+                                <th rowspan="2" class="rank-col sortable" data-sort="rank">#</th>
+                                <th rowspan="2" class="sticky-col sortable" data-sort="name">名前</th>
+                                <th rowspan="2" class="sortable" data-sort="role">役職</th>
+                                <th class="sortable" data-sort="0">月曜</th>
+                                <th class="sortable" data-sort="1">火曜</th>
+                                <th class="sortable" data-sort="2">水曜</th>
+                                <th class="sortable" data-sort="3">木曜</th>
+                                <th class="sortable" data-sort="4">金曜</th>
+                                <th class="sortable" data-sort="5">土曜</th>
+                                <th rowspan="2" class="sortable" data-sort="total">合計</th>
                             </tr>
                             <tr class="sub-headers">
                                 <th>レーダー</th>
@@ -141,7 +142,7 @@
             </div>
         </div>
 
-        <!-- 毎週用タブ -->
+        <!-- 対決ポイント（最終）タブ -->
         <div id="tab-weekly" class="tab-content">
             <section class="weekly-date-selection date-selector-section">
                 <div class="calendar-card">
@@ -164,6 +165,34 @@
                 </div>
 
                 <div id="weeklyInputGrid" class="daily-input-grid">
+                    <!-- JSで個別ボックスを生成 -->
+                </div>
+            </section>
+        </div>
+
+        <!-- 寄付ポイント（最終）タブ -->
+        <div id="tab-donation" class="tab-content">
+            <section class="weekly-date-selection date-selector-section">
+                <div class="calendar-card">
+                    <label for="donationWeekPicker">📅 週計の期間を選択 (月曜開始):</label>
+                    <input type="date" id="donationWeekPicker" class="date-input">
+                    <span class="selected-week-range" id="donationRangeDisplay">----/--/-- - ----/--/--</span>
+                </div>
+            </section>
+
+            <section class="weekly-bulk-input">
+                <div class="grid-header">
+                    <h3>💎 寄付ポイントの一括・個別入力</h3>
+                    <p class="guide-text">週の最終結果を貼り付けるか、個別に数値を入力してください。</p>
+                </div>
+
+                <div class="bulk-area">
+                    <textarea id="donationBulkArea"
+                        placeholder="天くんのパパ, 15000&#10;Ｔ－Ａ, 20000&#10;...のように貼り付け可能"></textarea>
+                    <button id="applyDonationBulkBtn" class="btn btn-primary">一括反映する</button>
+                </div>
+
+                <div id="donationInputGrid" class="daily-input-grid">
                     <!-- JSで個別ボックスを生成 -->
                 </div>
             </section>
@@ -205,7 +234,9 @@
                         <thead>
                             <tr>
                                 <th>名前</th>
-                                <th class="numeric-col">週間計</th>
+                                <th class="numeric-col sortable" data-sort="pts">対決pt</th>
+                                <th class="numeric-col sortable" data-sort="donPts">寄付pt</th>
+                                <th class="numeric-col sortable" data-sort="total">連盟貢献pt(合計)</th>
                                 <th>現役職</th>
                                 <th>判定ランク</th>
                                 <th>ステータス</th>
