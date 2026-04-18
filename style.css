@@ -64,7 +64,7 @@ body {
 }
 
 .container {
-    max-width: 1000px;
+    max-width: 1400px;
     margin: 0 auto;
     position: relative;
     z-index: 10;
@@ -729,9 +729,10 @@ tbody tr:nth-child(n) {
 }
 
 #dailySummaryTable th, #dailySummaryTable td {
-    padding: 15px 12px;
+    padding: 12px 8px;
     text-align: center;
     border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
 }
 
 #dailySummaryTable thead tr.main-headers th {
@@ -752,6 +753,44 @@ tbody tr:nth-child(n) {
     font-weight: 700;
     color: var(--secondary);
     border-left: 1px solid var(--border);
+}
+
+#dailySummaryTable td:last-child {
+    min-width: 180px;
+    white-space: normal;
+    font-weight: 600;
+    text-align: left !important;
+}
+
+#dailySummaryTable tfoot {
+    background: rgba(108, 92, 231, 0.2);
+    font-weight: 700;
+    border-top: 2px solid var(--primary);
+}
+
+#dailySummaryTable tfoot td {
+    color: var(--text);
+    padding: 15px 12px;
+}
+
+.analysis-box {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(253, 121, 168, 0.1));
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 700;
+    color: var(--text);
+    font-size: 1.1rem;
+    box-shadow: 0 4px 15px rgba(253, 121, 168, 0.2);
+    animation: fadeIn 0.8s ease;
+}
+
+.analysis-highlight {
+    color: var(--accent);
+    font-size: 1.3rem;
+    margin: 0 5px;
 }
 
 /* ソート関連 */

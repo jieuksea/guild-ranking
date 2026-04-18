@@ -440,12 +440,7 @@ function renderDailyRankingSummary() {
     summary.forEach((m, idx) => {
         const tr = document.createElement('tr');
         
-        // 合計値ベースのランク表示を計算（ソート順に関わらず絶対的な順位を表示したい場合）
-        // ここでは単純に表示順に順位を振るか、元の実力順位を振るか
-        // ユーザーは「各曜日でソート」を求めているので、表示順に順位を振ると混乱する可能性がある
-        // しかし、通常はソート後の順序で#を振るのが一般的
-        
-        // 実力順（合計値）を別途計算してランクバッジに使う
+        // 合計値ベースのランク表示を計算
         const actualRank = members.map(x => {
             let t = 0;
             for(let i=0; i<6; i++) t += (dailyData[weekDays[i]] && dailyData[weekDays[i]][x.name]) || 0;
@@ -453,13 +448,77 @@ function renderDailyRankingSummary() {
         }).sort((a,b) => b.total - a.total).findIndex(x => x.name === m.name) + 1;
 
         if (actualRank <= 3) tr.className = `rank-${actualRank}`;
+
+        // 個人分析（一番低い値を抽出）
+        const dayNames = ["レーダー", "基地", "化学", "英雄", "戦争", "敵軍"];
+        let minVal = Infinity;
+        let minIdx = -1;
+        
+        // 全て0の場合は「伸びしろ」の判定をしないか、デフォルトを表示
+        let allZero = m.pts.every(p => p === 0);
+        
+        if (!allZero) {
+            m.pts.forEach((p, i) => {
+                if (p < minVal) {
+                    minVal = p;
+                    minIdx = i;
+                }
+            });
+        }
+        
+        const advice = minIdx !== -1 ? `<span style="font-size: 0.85rem; color: #fff;">${m.name}は<span style="color: #00d2ff; font-weight: 700;">『${dayNames[minIdx]}』</span>が伸びしろです</span>` : '-';
         
         tr.innerHTML = `<td><span class="rank-badge">${actualRank}</span></td>
             <td class="sticky-col member-name">${m.name}</td><td>${m.role}</td>
             ${m.pts.map(p => `<td>${p.toLocaleString()}</td>`).join('')}
-            <td class="total-col">${m.total.toLocaleString()}</td>`;
+            <td class="total-col">${m.total.toLocaleString()}</td>
+            <td style="text-align: left;">${advice}</td>`;
         tbody.appendChild(tr);
     });
+
+    // 合計値の計算とフッター表示
+    const tfoot = document.getElementById('dailySummaryFoot');
+    if (tfoot) {
+        tfoot.innerHTML = '';
+        const dailyTotals = [0, 0, 0, 0, 0, 0];
+        let weeklyGrandTotal = 0;
+        
+        summary.forEach(m => {
+            m.pts.forEach((p, i) => { dailyTotals[i] += p; });
+            weeklyGrandTotal += m.total;
+        });
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="3" style="text-align: right; padding-right: 20px;">連盟合計</td>
+            ${dailyTotals.map(t => `<td>${t.toLocaleString()}</td>`).join('')}
+            <td class="total-col">${weeklyGrandTotal.toLocaleString()}</td>
+            <td></td>`;
+        tfoot.appendChild(tr);
+
+        // 分析メッセージの生成
+        const analysisBox = document.getElementById('dailyRankingAnalysis');
+        if (analysisBox) {
+            const dayNames = ["レーダー", "基地", "化学", "英雄", "戦争", "敵軍"];
+            
+            // 0以上の値のみを対象に最小値を探す (入力がない曜日を無視するため)
+            let minVal = Infinity;
+            let minIdx = -1;
+            
+            dailyTotals.forEach((val, idx) => {
+                if (val > 0 && val < minVal) {
+                    minVal = val;
+                    minIdx = idx;
+                }
+            });
+
+            if (minIdx !== -1) {
+                analysisBox.innerHTML = `今週は<span class="analysis-highlight">${dayNames[minIdx]}</span>が連盟として伸び悩みました`;
+                analysisBox.style.display = 'block';
+            } else {
+                analysisBox.style.display = 'none';
+            }
+        }
+    }
 }
 
 function updateSortIcons() {
