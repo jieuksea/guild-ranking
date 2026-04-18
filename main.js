@@ -197,12 +197,12 @@ function exportData() {
 function handleImport(e) {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     if (!confirm('既存のデータが上書きされます。よろしいですか？')) return;
     if (!checkAuth()) return;
 
     const reader = new FileReader();
-    reader.onload = function(event) {
+    reader.onload = function (event) {
         try {
             const data = JSON.parse(event.target.result);
             if (data.members) members = data.members;
@@ -210,7 +210,7 @@ function handleImport(e) {
             if (data.weeklyData) weeklyData = data.weeklyData;
             if (data.donationData) donationData = data.donationData;
             if (data.thresholds) thresholds = data.thresholds;
-            
+
             save();
             init(); // 再初期化
             alert('インポートが完了しました！');
@@ -235,7 +235,7 @@ function handleBulkInput() {
             const pastedName = match[1].trim();
             const normPasted = normalizeName(pastedName);
             const pts = parseInt(match[2]);
-            
+
             const member = members.find(m => normalizeName(m.name) === normPasted);
             if (member) dailyData[date][member.name] = pts;
         }
@@ -250,18 +250,18 @@ function handleBulkInput() {
 function normalizeName(str) {
     if (!str) return "";
     let n = str.normalize('NFKC') // 全角半角統一
-               .replace(/[ぁ-ん]/g, s => String.fromCharCode(s.charCodeAt(0) + 0x60)); // ひらがな→カタカナ
-    
+        .replace(/[ぁ-ん]/g, s => String.fromCharCode(s.charCodeAt(0) + 0x60)); // ひらがな→カタカナ
+
     const smallKanaMap = {
-        'ァ':'ア','ィ':'イ','ゥ':'ウ','ェ':'エ','ォ':'オ',
-        'ッ':'ツ','ャ':'ヤ','ュ':'ユ','ョ':'ヨ','ヮ':'ワ','ヶ':'ケ','ヶ':'ケ'
+        'ァ': 'ア', 'ィ': 'イ', 'ゥ': 'ウ', 'ェ': 'エ', 'ォ': 'オ',
+        'ッ': 'ツ', 'ャ': 'ヤ', 'ュ': 'ユ', 'ョ': 'ヨ', 'ヮ': 'ワ', 'ヶ': 'ケ', 'ヶ': 'ケ'
     };
     n = n.replace(/[ァィゥェォッャュョヮヵヶ]/g, s => smallKanaMap[s] || s); // 小書き→大書き
-    
+
     return n.replace(/[ー―－‐]+(?=[ー―－‐])|[-ー―－‐]/g, 'ー') // 長音・ハイフン類を1つの「ー」に
-            .replace(/ー+/g, 'ー') // 連続する長音を1つに
-            .replace(/\s+/g, '') 
-            .toLowerCase();
+        .replace(/ー+/g, 'ー') // 連続する長音を1つに
+        .replace(/\s+/g, '')
+        .toLowerCase();
 }
 
 function renderDailyGrid() {
@@ -300,7 +300,7 @@ function handleWeeklyBulkInput() {
             const pastedName = match[1].trim();
             const normPasted = normalizeName(pastedName);
             const pts = parseInt(match[2]);
-            
+
             const member = members.find(m => normalizeName(m.name) === normPasted);
             if (member) weeklyData[currentWeeklyWeekStart][member.name] = pts;
         }
@@ -347,7 +347,7 @@ function handleDonationBulkInput() {
             const pastedName = match[1].trim();
             const normPasted = normalizeName(pastedName);
             const pts = parseInt(match[2]) * 1000; // 0を3つ追加 (1000倍)
-            
+
             const member = members.find(m => normalizeName(m.name) === normPasted);
             if (member) donationData[currentDonationWeekStart][member.name] = pts;
         }
@@ -406,7 +406,7 @@ function renderDailyRankingSummary() {
     // ソート処理
     summary.sort((a, b) => {
         let valA, valB;
-        
+
         if (currentSortCol === 'name') {
             valA = a.name;
             valB = b.name;
@@ -439,13 +439,13 @@ function renderDailyRankingSummary() {
 
     summary.forEach((m, idx) => {
         const tr = document.createElement('tr');
-        
+
         // 合計値ベースのランク表示を計算
         const actualRank = members.map(x => {
             let t = 0;
-            for(let i=0; i<6; i++) t += (dailyData[weekDays[i]] && dailyData[weekDays[i]][x.name]) || 0;
-            return {name: x.name, total: t};
-        }).sort((a,b) => b.total - a.total).findIndex(x => x.name === m.name) + 1;
+            for (let i = 0; i < 6; i++) t += (dailyData[weekDays[i]] && dailyData[weekDays[i]][x.name]) || 0;
+            return { name: x.name, total: t };
+        }).sort((a, b) => b.total - a.total).findIndex(x => x.name === m.name) + 1;
 
         if (actualRank <= 3) tr.className = `rank-${actualRank}`;
 
@@ -453,10 +453,10 @@ function renderDailyRankingSummary() {
         const dayNames = ["レーダー", "基地", "化学", "英雄", "戦争", "敵軍"];
         let minVal = Infinity;
         let minIdx = -1;
-        
+
         // 全て0の場合は「伸びしろ」の判定をしないか、デフォルトを表示
         let allZero = m.pts.every(p => p === 0);
-        
+
         if (!allZero) {
             m.pts.forEach((p, i) => {
                 if (p < minVal) {
@@ -465,9 +465,9 @@ function renderDailyRankingSummary() {
                 }
             });
         }
-        
+
         const advice = minIdx !== -1 ? `<span style="font-size: 0.85rem; color: #fff;">${m.name}は<span style="color: #00d2ff; font-weight: 700;">『${dayNames[minIdx]}』</span>が伸びしろです</span>` : '-';
-        
+
         tr.innerHTML = `<td><span class="rank-badge">${actualRank}</span></td>
             <td class="sticky-col member-name">${m.name}</td><td>${m.role}</td>
             ${m.pts.map(p => `<td>${p.toLocaleString()}</td>`).join('')}
@@ -482,7 +482,7 @@ function renderDailyRankingSummary() {
         tfoot.innerHTML = '';
         const dailyTotals = [0, 0, 0, 0, 0, 0];
         let weeklyGrandTotal = 0;
-        
+
         summary.forEach(m => {
             m.pts.forEach((p, i) => { dailyTotals[i] += p; });
             weeklyGrandTotal += m.total;
@@ -499,11 +499,11 @@ function renderDailyRankingSummary() {
         const analysisBox = document.getElementById('dailyRankingAnalysis');
         if (analysisBox) {
             const dayNames = ["レーダー", "基地", "化学", "英雄", "戦争", "敵軍"];
-            
+
             // 0以上の値のみを対象に最小値を探す (入力がない曜日を無視するため)
             let minVal = Infinity;
             let minIdx = -1;
-            
+
             dailyTotals.forEach((val, idx) => {
                 if (val > 0 && val < minVal) {
                     minVal = val;
@@ -583,15 +583,15 @@ function updateName(oldName, newName) {
         renderTable(); // 元に戻す
         return;
     }
-    
+
     if (!checkAuth()) {
         renderTable();
         return;
     }
-    
+
     if (members.find(m => m.name === newName)) {
         alert('その名前は既に存在します。');
-        renderTable(); 
+        renderTable();
         return;
     }
 
@@ -644,7 +644,7 @@ function removeMember(name) {
     if (true) { // 既定のフローを維持 
         // 1. メンバーリストから削除
         members = members.filter(x => x.name !== name);
-        
+
         // 2. 毎日用データから削除
         Object.keys(dailyData).forEach(date => {
             delete dailyData[date][name];
@@ -790,7 +790,7 @@ function save() {
             thresholds,
             lastUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => console.log("クラウドに保存しました。"))
-          .catch(e => console.error("クラウド保存失敗:", e));
+            .catch(e => console.error("クラウド保存失敗:", e));
     }
 }
 
@@ -823,15 +823,15 @@ document.getElementById('addMemberBtn').addEventListener('click', () => {
     const name = document.getElementById('newMemberName').value.trim();
     if (!name) return;
     if (!checkAuth()) return;
-    
+
     members.push({ name, role: 'R1' });
     document.getElementById('newMemberName').value = '';
     save(); renderTable(); updateStats();
 });
-document.getElementById('saveData').addEventListener('click', () => { 
+document.getElementById('saveData').addEventListener('click', () => {
     if (checkAuth()) {
-        save(); 
-        alert('保存しました！'); 
+        save();
+        alert('保存しました！');
     }
 });
 
