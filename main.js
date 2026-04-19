@@ -736,10 +736,10 @@ function renderSimulator() {
         const rTot = sortedTotal.findIndex(x => x.name === m.name) + 1;
 
         let recLevel = 0;
-        if (pts >= thresholds.Ex) recLevel = 4;
-        else if (pts >= thresholds.R4) recLevel = 3;
-        else if (pts >= thresholds.R3) recLevel = 2;
-        else if (pts >= thresholds.R2) recLevel = 1;
+        if (totalContribution >= thresholds.Ex) recLevel = 4;
+        else if (totalContribution >= thresholds.R4) recLevel = 3;
+        else if (totalContribution >= thresholds.R3) recLevel = 2;
+        else if (totalContribution >= thresholds.R2) recLevel = 1;
 
         const currentLevel = roleLevels[m.role] !== undefined ? roleLevels[m.role] : 0;
 
