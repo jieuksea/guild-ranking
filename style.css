@@ -935,7 +935,9 @@ tbody tr:nth-child(n) {
         align-items: stretch;
     }
     
-    th:nth-child(4), td:nth-child(4) {
-        display: none;
+    /* モバイルでのテーブル視認性向上 */
+    .sticky-col {
+        background: #1a1645 !important; /* 少し明るめの色にして階層を分かりやすく */
+        box-shadow: 4px 0 10px rgba(0,0,0,0.3);
     }
 }

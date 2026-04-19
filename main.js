@@ -763,7 +763,7 @@ function renderSimulator() {
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${m.name}</td>
+            <td class="sticky-col">${m.name}</td>
             <td class="numeric-col"><span class="${getClass(rPts)}">${rPts}</span>${pts.toLocaleString()}</td>
             <td class="numeric-col"><span class="${getClass(rDon)}">${rDon}</span>${donPts.toLocaleString()}</td>
             <td class="numeric-col" style="color: var(--primary); font-weight: 700;"><span class="${getClass(rTot)}">${rTot}</span>${totalContribution.toLocaleString()}</td>
