@@ -901,6 +901,23 @@ tbody tr:nth-child(n) {
     border: 1px solid rgba(46, 204, 113, 0.3);
 }
 
+.mini-rank {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-right: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 1px 5px;
+    border-radius: 4px;
+    vertical-align: middle;
+    display: inline-block;
+    min-width: 18px;
+    text-align: center;
+}
+
+.mini-rank-1 { color: #ffd700; background: rgba(255, 215, 0, 0.2); font-weight: 700; }
+.mini-rank-2 { color: #c0c0c0; background: rgba(192, 192, 192, 0.2); font-weight: 700; }
+.mini-rank-3 { color: #cd7f32; background: rgba(205, 127, 50, 0.2); font-weight: 700; }
+
 .status-down {
     background: rgba(231, 76, 60, 0.15);
     color: #e74c3c;

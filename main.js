@@ -700,6 +700,11 @@ function renderSimulator() {
         return { ...m, pts, donPts, totalContribution };
     });
 
+    // 順位計算用のソート済み配列（降順）
+    const sortedPts = [...simData].sort((a, b) => b.pts - a.pts);
+    const sortedDonPts = [...simData].sort((a, b) => b.donPts - a.donPts);
+    const sortedTotal = [...simData].sort((a, b) => b.totalContribution - a.totalContribution);
+
     // ソート処理
     simData.sort((a, b) => {
         let valA, valB;
@@ -725,6 +730,11 @@ function renderSimulator() {
         const donPts = m.donPts;
         const totalContribution = m.totalContribution;
 
+        // 順位の取得
+        const rPts = sortedPts.findIndex(x => x.name === m.name) + 1;
+        const rDon = sortedDonPts.findIndex(x => x.name === m.name) + 1;
+        const rTot = sortedTotal.findIndex(x => x.name === m.name) + 1;
+
         let recLevel = 0;
         if (pts >= thresholds.Ex) recLevel = 4;
         else if (pts >= thresholds.R4) recLevel = 3;
@@ -748,12 +758,15 @@ function renderSimulator() {
             statusClass = "status-down";
         }
 
+        // 順位表示用のクラス判定
+        const getClass = (r) => r <= 3 ? `mini-rank mini-rank-${r}` : 'mini-rank';
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${m.name}</td>
-            <td class="numeric-col">${pts.toLocaleString()}</td>
-            <td class="numeric-col">${donPts.toLocaleString()}</td>
-            <td class="numeric-col" style="color: var(--primary); font-weight: 700;">${totalContribution.toLocaleString()}</td>
+            <td class="numeric-col"><span class="${getClass(rPts)}">${rPts}</span>${pts.toLocaleString()}</td>
+            <td class="numeric-col"><span class="${getClass(rDon)}">${rDon}</span>${donPts.toLocaleString()}</td>
+            <td class="numeric-col" style="color: var(--primary); font-weight: 700;"><span class="${getClass(rTot)}">${rTot}</span>${totalContribution.toLocaleString()}</td>
             <td>${m.role}</td>
             <td style="font-weight:700; color: var(--secondary);">${levelRoles[recLevel]}</td>
             <td><span class="sim-status ${statusClass}">${status}</span></td>
