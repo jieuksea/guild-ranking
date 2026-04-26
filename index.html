@@ -205,8 +205,15 @@
             </section>
         </div>
 
-        <!-- 昇格シミュレータータブ -->
         <div id="tab-simulator" class="tab-content">
+            <section class="simulator-date-selection date-selector-section">
+                <div class="calendar-card">
+                    <label for="simWeekPicker">📅 シミュレーション対象の週を選択:</label>
+                    <input type="date" id="simWeekPicker" class="date-input">
+                    <span class="selected-week-range" id="simRangeDisplay">----/--/-- - ----/--/--</span>
+                </div>
+            </section>
+
             <section class="simulator-config daily-bulk-input">
                 <div class="grid-header">
                     <h3>⚙️ 昇格基準ポイント設定</h3>

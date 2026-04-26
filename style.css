@@ -941,3 +941,10 @@ tbody tr:nth-child(n) {
         box-shadow: 4px 0 10px rgba(0,0,0,0.3);
     }
 }
+
+.pts-diff {
+    font-size: 0.7rem;
+    margin-left: 6px;
+    font-weight: 500;
+    vertical-align: middle;
+}

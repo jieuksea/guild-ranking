@@ -17,6 +17,7 @@ let donationData = {};
 let currentRankingWeekStart = '';
 let currentWeeklyWeekStart = '';
 let currentDonationWeekStart = '';
+let currentSimWeekStart = '';
 let thresholds = { R2: 5000, R3: 10000, R4: 20000, Ex: 40000 };
 
 // ソート状態
@@ -82,10 +83,12 @@ async function init() {
     currentRankingWeekStart = monStr;
     currentWeeklyWeekStart = monStr;
     currentDonationWeekStart = monStr;
+    currentSimWeekStart = monStr;
 
     if (document.getElementById('rankingWeekPicker')) document.getElementById('rankingWeekPicker').value = monStr;
     if (document.getElementById('weeklyWeekPicker')) document.getElementById('weeklyWeekPicker').value = monStr;
     if (document.getElementById('donationWeekPicker')) document.getElementById('donationWeekPicker').value = monStr;
+    if (document.getElementById('simWeekPicker')) document.getElementById('simWeekPicker').value = monStr;
 
     setupTabs();
     initCalendar();
@@ -94,6 +97,7 @@ async function init() {
     updateRankingWeekDisplay();
     updateWeeklyInputWeekDisplay();
     updateDonationInputWeekDisplay();
+    updateSimWeekDisplay();
     renderDailyGrid();
     updateStats();
 }
@@ -550,6 +554,12 @@ function updateDonationInputWeekDisplay() {
     if (target) target.textContent = `${days[0].replace(/-/g, '/')} - ${days[6].replace(/-/g, '/')}`;
 }
 
+function updateSimWeekDisplay() {
+    const days = getWeekDays(currentSimWeekStart);
+    const target = document.getElementById('simRangeDisplay');
+    if (target) target.textContent = `${days[0].replace(/-/g, '/')} - ${days[6].replace(/-/g, '/')}`;
+}
+
 // --- 管理・共通 ---
 function renderTable(filter = '') {
     const tbody = document.getElementById('memberListBody');
@@ -672,21 +682,22 @@ function renderSimulator() {
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    // weeklyData & donationData の中から直近（最新）の日付を取得
-    const weekKeys = Object.keys(weeklyData).filter(k => Object.keys(weeklyData[k]).length > 0).sort();
-    const latestWeekKey = weekKeys.length > 0 ? weekKeys[weekKeys.length - 1] : null;
+    // 現在の週と前の週の日付を取得
+    const prevDate = new Date(currentSimWeekStart);
+    prevDate.setDate(prevDate.getDate() - 7);
+    const prevWeekStart = formatDate(prevDate);
 
-    const donWeekKeys = Object.keys(donationData).filter(k => Object.keys(donationData[k]).length > 0).sort();
-    const latestDonWeekKey = donWeekKeys.length > 0 ? donWeekKeys[donWeekKeys.length - 1] : null;
+    const currentPoints = weeklyData[currentSimWeekStart] || {};
+    const currentDonationPoints = donationData[currentSimWeekStart] || {};
 
-    const currentPoints = latestWeekKey ? weeklyData[latestWeekKey] : {};
-    const currentDonationPoints = latestDonWeekKey ? donationData[latestDonWeekKey] : {};
+    const prevPoints = weeklyData[prevWeekStart] || {};
+    const prevDonationPoints = donationData[prevWeekStart] || {};
 
     // 表示用タイトルの更新
     const title = document.querySelector('#tab-simulator .grid-header p');
-    if (title && latestWeekKey) {
-        const d = latestWeekKey.replace(/-/g, '/');
-        title.textContent = `直近の週次データ (${d}開始の週) を参照中`;
+    if (title) {
+        const d = currentSimWeekStart.replace(/-/g, '/');
+        title.textContent = `${d} 開始の週のデータを参照中`;
     }
 
     const roleLevels = { "盟主": 4, "戦神": 4, "女神": 4, "理事": 4, "執事": 4, "R4": 3, "R3": 2, "R2": 1, "R1": 0 };
@@ -725,6 +736,9 @@ function renderSimulator() {
     // ヘッダーのソートアイコン更新
     updateSimSortIcons();
 
+    // 順位表示用のクラス判定ヘルパー
+    const getClass = (r) => r <= 3 ? `mini-rank mini-rank-${r}` : 'mini-rank';
+
     simData.forEach(m => {
         const pts = m.pts;
         const donPts = m.donPts;
@@ -758,15 +772,26 @@ function renderSimulator() {
             statusClass = "status-down";
         }
 
-        // 順位表示用のクラス判定
-        const getClass = (r) => r <= 3 ? `mini-rank mini-rank-${r}` : 'mini-rank';
+        // 差分の計算ヘルパー
+        const getDiffHtml = (curr, prev) => {
+            const diff = curr - prev;
+            if (diff === 0) return '';
+            const color = diff > 0 ? '#00d2ff' : '#ff7675';
+            const sign = diff > 0 ? '+' : '';
+            return `<span class="pts-diff" style="color: ${color};">${sign}${diff.toLocaleString()}</span>`;
+        };
+
+        const ptsDiff = getDiffHtml(pts, prevPoints[m.name] || 0);
+        const donDiff = getDiffHtml(donPts, prevDonationPoints[m.name] || 0);
+        const prevTotal = (prevPoints[m.name] || 0) + (prevDonationPoints[m.name] || 0);
+        const totalDiff = getDiffHtml(totalContribution, prevTotal);
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td class="sticky-col">${m.name}</td>
-            <td class="numeric-col"><span class="${getClass(rPts)}">${rPts}</span>${pts.toLocaleString()}</td>
-            <td class="numeric-col"><span class="${getClass(rDon)}">${rDon}</span>${donPts.toLocaleString()}</td>
-            <td class="numeric-col" style="color: var(--primary); font-weight: 700;"><span class="${getClass(rTot)}">${rTot}</span>${totalContribution.toLocaleString()}</td>
+            <td class="numeric-col"><span class="${getClass(rPts)}">${rPts}</span>${pts.toLocaleString()}${ptsDiff}</td>
+            <td class="numeric-col"><span class="${getClass(rDon)}">${rDon}</span>${donPts.toLocaleString()}${donDiff}</td>
+            <td class="numeric-col" style="color: var(--primary); font-weight: 700;"><span class="${getClass(rTot)}">${rTot}</span>${totalContribution.toLocaleString()}${totalDiff}</td>
             <td>${m.role}</td>
             <td style="font-weight:700; color: var(--secondary);">${levelRoles[recLevel]}</td>
             <td><span class="sim-status ${statusClass}">${status}</span></td>
@@ -829,6 +854,12 @@ const dwp = document.getElementById('donationWeekPicker');
 if (dwp) dwp.addEventListener('change', e => {
     currentDonationWeekStart = getMonStr(e.target.value);
     updateDonationInputWeekDisplay(); renderDonationGrid();
+});
+
+const swp = document.getElementById('simWeekPicker');
+if (swp) swp.addEventListener('change', e => {
+    currentSimWeekStart = getMonStr(e.target.value);
+    updateSimWeekDisplay(); renderSimulator();
 });
 
 document.getElementById('memberSearch').addEventListener('input', e => renderTable(e.target.value));
